@@ -1,10 +1,12 @@
+# frozen_string_literal: true
+
 require 'sinatra'
 require 'mini_magick'
 require 'open-uri'
 require 'json'
 
-get "/redirect" do
-  redirect "/memes/meme2.jpg", 307
+get '/redirect' do
+  redirect '/memes/meme2.jpg', 307
 end
 
 post '/memes' do
@@ -18,24 +20,23 @@ post '/memes' do
 
   return 400 if meme['text'] == ''
 
-
   uri = URI.parse(meme['image_url'])
 
   filename = File.basename(uri.path)
   path = "images/#{filename}"
 
   data = uri.open.read
-  return 413 if data.bytesize >= 26214400
+  return 413 if data.bytesize >= 26_214_400
 
   File.open(path, 'wb') { |f| f.write(data) }
 
   image = MiniMagick::Image.new(path)
   image.combine_options do |c|
-    c.gravity "center"
+    c.gravity 'center'
     c.draw "text 0,200 '#{meme['text']}'"
-    c.undercolor "White"
-    c.fill "Black"
-    c.pointsize "60"
+    c.undercolor 'White'
+    c.fill 'Black'
+    c.pointsize '60'
   end
   image.write(path)
 
@@ -45,6 +46,6 @@ end
 # This is just for demo purposes
 #  you should not use unsanitized parameters provided by user to access file paths
 get '/memes/:file' do
-  path = File.dirname(__FILE__) + '/images/' + params[:file]
+  path = "#{File.dirname(__FILE__)}/images/#{params[:file]}"
   send_file(path)
 end
