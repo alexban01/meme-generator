@@ -23,6 +23,7 @@ post '/memes' do
 
   uri = URI.parse(meme['image_url'])
 
+  # TODO: download meta-data first then decide if its too big
   data = uri.open.read
   return 413 if data.bytesize >= 26_214_400
 
