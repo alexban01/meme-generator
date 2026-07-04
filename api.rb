@@ -18,11 +18,16 @@ post '/memes' do
 
   return 400 if meme['text'] == ''
 
+
   uri = URI.parse(meme['image_url'])
 
   filename = File.basename(uri.path)
   path = "images/#{filename}"
-  File.open(path, 'wb') { |f| f.write(uri.open.read) }
+
+  data = uri.open.read
+  return 413 if data.bytesize >= 26214400
+
+  File.open(path, 'wb') { |f| f.write(data) }
 
   image = MiniMagick::Image.new(path)
   image.combine_options do |c|

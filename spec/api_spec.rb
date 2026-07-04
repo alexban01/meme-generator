@@ -39,6 +39,13 @@ describe 'POST /memes' do
     expect(last_response.status).to eq(400)
   end
 
+  it 'returns 413 if the image is larger than 25 MB' do
+    oversized = 'a' * (26214401)
+    stub_request(:get, image_url).to_return(body: oversized, status: 200)
+    post_meme(image_url, 'Hello World')
+    expect(last_response.status).to eq(413)
+  end
+
   after do
     File.delete(path) if File.exist?(path)
   end
