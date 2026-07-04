@@ -5,6 +5,7 @@ require_relative 'spec_helper'
 describe 'POST /memes' do
   image_url = 'https://images.unsplash.com/photo-1647549831144-09d4c521c1f1'
   name = File.basename(URI.parse(image_url).path)
+  path = "images/#{name}"
   fixture = File.binread('images/original.jpeg')
 
   before do
@@ -41,8 +42,8 @@ describe 'POST /memes' do
   end
 
   it 'returns 413 if the image is larger than 25 MB' do
-    oversized = 'a' * 26_214_401
-    stub_request(:get, image_url).to_return(body: oversized, status: 200)
+    data = 'a' * 26_214_401
+    stub_request(:get, image_url).to_return(body: data, status: 200)
     post_meme(image_url, 'Hello World')
     expect(last_response.status).to eq(413)
   end
