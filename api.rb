@@ -4,6 +4,7 @@ require 'sinatra'
 require 'mini_magick'
 require 'open-uri'
 require 'json'
+require 'digest'
 
 get '/redirect' do
   redirect '/memes/meme2.jpg', 307
@@ -22,11 +23,12 @@ post '/memes' do
 
   uri = URI.parse(meme['image_url'])
 
-  filename = File.basename(uri.path)
-  path = "images/#{filename}"
-
   data = uri.open.read
   return 413 if data.bytesize >= 26_214_400
+
+  extension = File.extname(uri.path)
+  filename = "#{Digest::SHA256.hexdigest(data)}#{extension}"
+  path = "images/#{filename}"
 
   File.open(path, 'wb') { |f| f.write(data) }
 

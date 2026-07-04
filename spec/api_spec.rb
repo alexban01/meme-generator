@@ -1,12 +1,13 @@
 # frozen_string_literal: true
 
 require_relative 'spec_helper'
+require 'digest'
 
 describe 'POST /memes' do
   image_url = 'https://images.unsplash.com/photo-1647549831144-09d4c521c1f1'
-  name = File.basename(URI.parse(image_url).path)
-  path = "images/#{name}"
   fixture = File.binread('images/original.jpeg')
+  name = "#{Digest::SHA256.hexdigest(fixture)}#{File.extname(URI.parse(image_url).path)}"
+  path = "images/#{name}"
 
   before do
     stub_request(:get, image_url).to_return(body: fixture, status: 200)
