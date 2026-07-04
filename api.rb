@@ -8,7 +8,16 @@ get "/redirect" do
 end
 
 post '/memes' do
-  meme = JSON.parse(request.body.read)['meme']
+  begin
+    meme = JSON.parse(request.body.read)['meme']
+  rescue JSON::ParserError
+    return 400
+  end
+
+  return 400 if meme['image_url'] == ''
+
+  return 400 if meme['text'] == ''
+
   uri = URI.parse(meme['image_url'])
 
   filename = File.basename(uri.path)

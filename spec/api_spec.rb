@@ -10,11 +10,33 @@ describe 'POST /memes' do
     stub_request(:get, image_url).to_return(body: fixture, status: 200)
   end
 
-  it 'redirects (303) to the generated meme image' do
-    post '/memes', { meme: { image_url: image_url, text: 'Hello' } }.to_json, { 'CONTENT_TYPE' => 'application/json' }
+  def post_meme(url, text)
+    post '/memes', { meme: { image_url: url, text: text } }.to_json, { 'CONTENT_TYPE' => 'application/json' }
+  end
+
+  it 'redirects 303 to the generated meme image' do
+    post_meme(image_url, 'Hello World')
 
     expect(last_response.status).to eq(303)
     expect(last_response.location).to end_with("/memes/#{name}")
+  end
+
+  it 'returns 400 if link is empty' do
+    post_meme('', 'Hello World')
+
+    expect(last_response.status).to eq(400)
+  end
+
+  it 'returns 400 if text is empty' do
+    post_meme(image_url, '')
+
+    expect(last_response.status).to eq(400)
+  end
+
+  it 'returns 400 on malformed JSON' do
+    post '/memes', 'test', { 'CONTENT_TYPE' => 'application/json' }
+
+    expect(last_response.status).to eq(400)
   end
 
   after do
