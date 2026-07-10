@@ -2,6 +2,7 @@
 
 source 'https://rubygems.org'
 
+gem 'bcrypt'
 gem 'mini_magick'
 gem 'puma'
 gem 'rackup'

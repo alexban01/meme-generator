@@ -5,6 +5,46 @@ require 'mini_magick'
 require 'open-uri'
 require 'json'
 require 'digest'
+require 'bcrypt'
+require 'securerandom'
+
+USERS_FILE = ENV.fetch('USERS_FILE', 'users.json')
+
+def load_users
+  File.exist?(USERS_FILE) ? JSON.parse(File.read(USERS_FILE)) : {}
+end
+
+def save_users(users)
+  File.write(USERS_FILE, JSON.generate(users))
+end
+
+post '/signup' do
+  user = JSON.parse(request.body.read)['user']
+  return [400, { errors: [{ message: 'Username is blank' }] }.to_json] if user['username'].to_s.empty?
+  return [400, { errors: [{ message: 'Password is blank' }] }.to_json] if user['password'].to_s.empty?
+
+  users = load_users
+  return 409 if users.key?(user['username'])
+
+  token = SecureRandom.hex(16)
+  users[user['username']] = { 'password' => BCrypt::Password.create(user['password']).to_s, 'token' => token }
+  save_users(users)
+
+  [201, { user: { token: token } }.to_json]
+end
+
+post '/login' do
+  creds = JSON.parse(request.body.read)['user']
+  user = load_users[creds['username'].to_s]
+  return 401 unless user && BCrypt::Password.new(user['password']) == creds['password']
+
+  [200, { user: { token: user['token'] } }.to_json]
+end
+
+before '/memes' do
+  token = request.env['HTTP_AUTHORIZATION'].to_s.sub('Bearer ', '')
+  halt 401 unless load_users.values.any? { |u| u['token'] == token }
+end
 
 get '/redirect' do
   redirect '/memes/meme2.jpg', 307
