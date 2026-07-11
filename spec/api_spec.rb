@@ -18,6 +18,11 @@ describe 'POST /memes' do
     token = JSON.parse(last_response.body)['user']['token']
   end
 
+  after do
+    File.delete(path) if File.exist?(path)
+    File.delete('test_users.json') if File.exist?('test_users.json')
+  end
+
   def post_meme(url, text, token)
     post '/memes', { meme: { image_url: url, text: text } }.to_json,
          { 'CONTENT_TYPE' => 'application/json', 'HTTP_AUTHORIZATION' => "Bearer #{token}" }
@@ -59,10 +64,5 @@ describe 'POST /memes' do
     stub_request(:get, image_url).to_return(body: data, status: 200)
     post_meme(image_url, 'Hello World', token)
     expect(last_response.status).to eq(413)
-  end
-
-  after do
-    File.delete(path) if File.exist?(path)
-    File.delete('test_users.json') if File.exist?('test_users.json')
   end
 end
