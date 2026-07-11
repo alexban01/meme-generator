@@ -7,43 +7,33 @@ require 'json'
 require 'digest'
 require 'bcrypt'
 require 'securerandom'
+require_relative 'lib/database'
 
-USERS_FILE = ENV.fetch('USERS_FILE', 'users.json')
-
-def load_users
-  File.exist?(USERS_FILE) ? JSON.parse(File.read(USERS_FILE)) : {}
-end
-
-def save_users(users)
-  File.write(USERS_FILE, JSON.generate(users))
-end
+DB = Database.new(ENV.fetch('DB_PATH', 'data/users.db'))
 
 post '/signup' do
   user = JSON.parse(request.body.read)['user']
   return [400, { errors: [{ message: 'Username is blank' }] }.to_json] if user['username'].to_s.empty?
   return [400, { errors: [{ message: 'Password is blank' }] }.to_json] if user['password'].to_s.empty?
 
-  users = load_users
-  return 409 if users.key?(user['username'])
-
   token = SecureRandom.hex(16)
-  users[user['username']] = { 'password' => BCrypt::Password.create(user['password']).to_s, 'token' => token }
-  save_users(users)
+  hashed_password = BCrypt::Password.create(user['password']).to_s
+  return 409 unless DB.insert_user(user['username'], hashed_password, token)
 
   [201, { user: { token: token } }.to_json]
 end
 
 post '/login' do
   creds = JSON.parse(request.body.read)['user']
-  user = load_users[creds['username'].to_s]
-  return 401 unless user && BCrypt::Password.new(user['password']) == creds['password']
+  user = DB.find_user_by_username(creds['username'].to_s)
+  return 401 unless user && BCrypt::Password.new(user['hashed_password']) == creds['password']
 
   [200, { user: { token: user['token'] } }.to_json]
 end
 
 before '/memes' do
   token = request.env['HTTP_AUTHORIZATION'].to_s.sub('Bearer ', '')
-  halt 401 unless load_users.values.any? { |u| u['token'] == token }
+  halt 401 unless DB.find_user_by_token(token)
 end
 
 get '/redirect' do
@@ -63,7 +53,6 @@ post '/memes' do
 
   uri = URI.parse(meme['image_url'])
 
-  # TODO: download meta-data first then decide if its too big
   data = uri.open.read
   return 413 if data.bytesize >= 26_214_400
 

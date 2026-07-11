@@ -13,8 +13,6 @@ def login(username, password)
 end
 
 describe 'POST /signup' do
-  after { File.delete('test_users.json') if File.exist?('test_users.json') }
-
   it 'creates a user and returns a token' do
     signup('user', 'password')
 
@@ -45,8 +43,6 @@ describe 'POST /signup' do
 end
 
 describe 'POST /login' do
-  after { File.delete('test_users.json') if File.exist?('test_users.json') }
-
   it 'returns the token when credentials are correct' do
     signup('user', 'password')
     login('user', 'password')

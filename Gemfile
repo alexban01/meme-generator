@@ -7,9 +7,11 @@ gem 'mini_magick'
 gem 'puma'
 gem 'rackup'
 gem 'sinatra'
+gem 'sqlite3'
 
 group :test do
   gem 'rack-test'
   gem 'rspec'
   gem 'webmock'
 end
+

@@ -20,7 +20,6 @@ describe 'POST /memes' do
 
   after do
     File.delete(path) if File.exist?(path)
-    File.delete('test_users.json') if File.exist?('test_users.json')
   end
 
   def post_meme(url, text, token)
