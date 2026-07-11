@@ -26,7 +26,7 @@ end
 post '/login' do
   creds = JSON.parse(request.body.read)['user']
   user = DB.find_user_by_username(creds['username'].to_s)
-  return 401 unless user && BCrypt::Password.new(user['hashed_password']) == creds['password']
+  return 403 unless user && BCrypt::Password.new(user['hashed_password']) == creds['password']
 
   [200, { user: { token: user['token'] } }.to_json]
 end

@@ -27,41 +27,51 @@ describe 'POST /memes' do
          { 'CONTENT_TYPE' => 'application/json', 'HTTP_AUTHORIZATION' => "Bearer #{token}" }
   end
 
-  it 'redirects 303 to the generated meme image' do
-    post_meme(image_url, 'Hello World', token)
+  context 'when the image is generated successfully' do
+    it 'redirects 303' do
+      post_meme(image_url, 'Hello World', token)
 
-    expect(last_response.status).to eq(303)
-    expect(last_response.location).to end_with("/memes/#{name}")
+      expect(last_response.status).to eq(303)
+      expect(last_response.location).to end_with("/memes/#{name}")
+    end
   end
 
-  it 'returns 401 without a valid token' do
-    post_meme(image_url, 'Hello World', 'bad-token')
+  context 'when an invalid token is used' do
+    it 'returns 401' do
+      post_meme(image_url, 'Hello World', 'bad-token')
 
-    expect(last_response.status).to eq(401)
+      expect(last_response.status).to eq(401)
+    end
   end
 
-  it 'returns 400 if link is empty' do
-    post_meme('', 'Hello World', token)
+  context 'when the inputs are empty' do
+    it 'returns 400 for no url' do
+      post_meme('', 'Hello World', token)
 
-    expect(last_response.status).to eq(400)
+      expect(last_response.status).to eq(400)
+    end
+
+    it 'returns 400 for no text' do
+      post_meme(image_url, '', token)
+
+      expect(last_response.status).to eq(400)
+    end
   end
 
-  it 'returns 400 if text is empty' do
-    post_meme(image_url, '', token)
+  context 'when JSON is malformed' do
+    it 'returns 400' do
+      post '/memes', 'test', { 'CONTENT_TYPE' => 'application/json', 'HTTP_AUTHORIZATION' => "Bearer #{token}" }
 
-    expect(last_response.status).to eq(400)
+      expect(last_response.status).to eq(400)
+    end
   end
 
-  it 'returns 400 on malformed JSON' do
-    post '/memes', 'test', { 'CONTENT_TYPE' => 'application/json', 'HTTP_AUTHORIZATION' => "Bearer #{token}" }
-
-    expect(last_response.status).to eq(400)
-  end
-
-  it 'returns 413 if the image is larger than 25 MB' do
-    data = 'a' * 26_214_401
-    stub_request(:get, image_url).to_return(body: data, status: 200)
-    post_meme(image_url, 'Hello World', token)
-    expect(last_response.status).to eq(413)
+  context 'when the image is too large' do
+    it 'returns 413' do
+      data = 'a' * 26_214_401
+      stub_request(:get, image_url).to_return(body: data, status: 200)
+      post_meme(image_url, 'Hello World', token)
+      expect(last_response.status).to eq(413)
+    end
   end
 end
