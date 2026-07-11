@@ -19,6 +19,21 @@ describe Database do
 
       expect(database.insert_user('user', 'pass2', '1234')).to be(false)
     end
+
+    it 'allows multiple users to be inserted' do
+      database.insert_user('user1', 'pass', '1234')
+      database.insert_user('user2', 'pass2', '1234')
+
+      user1 = database.find_user_by_username('user1')
+      expect(user1['username']).to eq('user1')
+
+      user2 = database.find_user_by_username('user2')
+      expect(user2['username']).to eq('user2')
+    end
+
+    it 'returns true if user is in the database' do
+
+    end
   end
 
   describe 'find_user' do
@@ -33,6 +48,14 @@ describe Database do
       user = database.find_user_by_token('1234')
       expect(user['token']).to eq('1234')
     end
+
+    it 'returns nil if the username is not found' do
+      expect(database.find_user_by_username('no_user')).to be_nil
+    end
+
+    it 'returns nil if the token is not found' do
+      expect(database.find_user_by_token('1234')).to be_nil
+    end
   end
 
   describe 'clear' do
@@ -42,6 +65,7 @@ describe Database do
       expect(user['username']).to eq('user')
 
       expect(database.clear).to be true
+      expect(database.find_user_by_token('1234')).to be_nil
     end
   end
 end
